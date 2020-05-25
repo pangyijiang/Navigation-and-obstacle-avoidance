@@ -34,9 +34,9 @@ class Critic:
         X_1 = Dense(128, activation='relu')(state_input)
         X_1 = Dense(64, activation='relu')(X_1)
 
-        X = concatenate([X_1, X_2])
-        # X= Add()([X_1, X_2]) 
-        # X = ReLU()(X)
+        # X = concatenate([X_1, X_2])
+        X= Add()([X_1, X_2]) 
+        X = ReLU()(X)
         X = Dense(64, activation='relu')(X)
         x = Dense(32, activation='relu')(X)
         out = Dense(1, activation='linear', kernel_initializer=RandomUniform())(X)
