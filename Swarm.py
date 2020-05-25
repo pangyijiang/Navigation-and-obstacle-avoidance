@@ -12,6 +12,7 @@ class SWARM():
     r_comm = 200 #communication radius
     flag_show_comm = False   #show comm radius
     flag_show_data = False   #show data
+    robot_size = 10 
     
     def __init__(self, map, num_uavs = 5):
         self.map = map
@@ -27,7 +28,7 @@ class SWARM():
         pose_set,vel_set = self._init_pos_vel(self.num_uavs)
         for i in range(self.num_uavs):
             name = "robot_%d" % i
-            self.uavs.append(ROBOT(self.map, self.trans, name, self.map.gold.pos, pose_set[i], vel_set[i]))
+            self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose_set[i], vel_set[i]))
             state.append(self.uavs[i].state_cal())
             self.uav_group.add(self.uavs[i])
         return state[0]
@@ -37,10 +38,18 @@ class SWARM():
         r = 30.0
         centre_x = self.map.MAP_SIZE[0]/2
         centre_y = self.map.MAP_SIZE[1]/2
-        pose_set = [np.array([math.sin(circle_point[i])*r + centre_x, math.cos(circle_point[i])*r + centre_y]) for i in range(num_uavs)]
+        while True:
+            pose_set = [np.array([np.random.randint(0, self.map.MAP_SIZE[0]), np.random.randint(0, self.map.MAP_SIZE[1])]) for i in range(num_uavs)]
+            r = []
+            for robot_pose in pose_set:
+                for obstacle_pos in self.map.obstacles.pos:
+                    r.append(np.sqrt(np.sum(np.square(robot_pose - obstacle_pos))))
+                r.append(np.sqrt(np.sum(np.square(robot_pose - self.map.gold.pos))))
+            if min(r) > (self.robot_size + self.map.obstacles.size) and min(r) > (self.robot_size + self.map.gold.size):
+                break
         #vel_set = [np.array([math.sin(circle_point[i]), math.cos(circle_point[i])])*np.random.uniform(8.0, 20.0) for i in range(num_uavs)]
         #vel_set = [np.array([np.random.uniform(-50.0, 50.0), np.random.uniform(-50.0, 50.0)]) for i in range(num_uavs)]
-        vel_set = [np.array([0.0, 0.0]) for i in range(num_uavs)]
+        vel_set = [np.array([np.random.randint(0, self.map.MAP_SIZE[0]), np.random.randint(0, self.map.MAP_SIZE[1])]) for i in range(num_uavs)]
         return pose_set,vel_set
 
     def swarm_step(self, actions):
@@ -71,7 +80,7 @@ class ROBOT(pg.sprite.Sprite):
     vel_max = 100    #linear velocity
     p_force_gain = 200
 
-    def __init__(self, map, transmitter, robot_name, robot_goal, robot_pose = np.zeros(2), robot_vel = np.zeros(2)):
+    def __init__(self, map, transmitter, robot_name, robot_size, robot_goal, robot_pose = np.zeros(2), robot_vel = np.zeros(2)):
         #calculation
         self.map = map
         self.transmitter = transmitter
@@ -84,7 +93,7 @@ class ROBOT(pg.sprite.Sprite):
         #pygame - animation
         pg.sprite.Sprite.__init__(self) # for collision dectection
         #for collision dectection
-        self.robot_size = 10  
+        self.robot_size = robot_size 
         self.rect = pg.Rect(0, 0, self.robot_size*2, self.robot_size*2)
         self.rect.center = self.robot_pose
         self.r_margin = (self.robot_size + self.map.obstacles.size + self.robot_size) #min distance to  obstacle
@@ -109,7 +118,7 @@ class ROBOT(pg.sprite.Sprite):
         # r =  - np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose))) + np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose_prv)))
         # reward += r/(self.vel_max*self.time_clk)
         r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
-        reward += -r/(np.sum(self.map.MAP_SIZE)/2)
+        reward += -r/(np.sum(self.map.MAP_SIZE)/2*5)
         #out of map
         if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
             reward += -np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))/(np.sum(self.map.MAP_SIZE)/2)*0.01
@@ -117,14 +126,14 @@ class ROBOT(pg.sprite.Sprite):
         for obstacle_pos in self.map.obstacles.pos:
             r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
             if r <= self.r_margin:
-                reward += ( -(self.r_margin - r)/self.robot_size -1.5)
+                reward += ( -(self.r_margin - r)/self.robot_size -5.0)
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             done = "loser"
-            reward += -3.0
+            reward += -5.0
         #collision with target
         if self.flag_collision["gold"]:
-            reward += 5.0
+            reward += 10.0
             done = "winner"
         #third: done
         # if True in self.flag_collision.values():

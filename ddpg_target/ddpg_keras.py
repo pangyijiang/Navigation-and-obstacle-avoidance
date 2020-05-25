@@ -10,7 +10,7 @@ class DDPG:
     batch_size = 32
     MEMORY_CAPACITY = 2000
     epsilon = 1.0  # exploration rate
-    epsilon_min = 0.1
+    epsilon_min = 0.01
     epsilon_decay = 0.9999
 
     def __init__(self, a_dim, s_dim, gamma = 0.9, lr = 0.001, tau = 0.01):
