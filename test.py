@@ -1,9 +1,9 @@
 import numpy as np
 
-x = np.cos(np.pi*3/2)
-y = np.sin(np.pi*3/2)
+for action in range(8):
 
-x = np.cos(-np.pi/2)
-y = np.sin(-np.pi/2)
+    degree_f = np.pi/4*action
+            # degree_f = self.degree + np.pi/4*action
+    p_force = np.array([np.cos(degree_f), np.sin(degree_f)])
 
-print(x, y)
+    print(p_force)

@@ -7,7 +7,7 @@ from ddpg_target.ddpg_keras import DDPG as DDPG_target
 def train(flag_train = True, flag_display = False):
 # def train(flag_train = False, flag_display = True):
     MAX_EPISODES = 1000
-    MAX_EP_STEPS = 200
+    MAX_EP_STEPS = 50
     env = ENV(0, flag_display) 
     model_target = DDPG_target(env.n_action, 8)
     if(not flag_train):
