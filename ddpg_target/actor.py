@@ -27,9 +27,9 @@ class Actor:
         exploration, and balance it with Layer Normalization.
         """
         state_input = Input(shape= [self.env_dim], name='state_input')
-        X = Dense(64, activation = "relu")(state_input)
-        X = Dense(32, activation='relu')(X)
-        X = Dense(16, activation='relu')(X)
+        X = Dense(256, activation = "relu")(state_input)
+        X = Dense(128, activation='relu')(X)
+        X = Dense(64, activation='relu')(X)
         Out = Dense(self.act_dim, activation='sigmoid', kernel_initializer=RandomUniform())(X)
         #continuous action
         #out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(X)

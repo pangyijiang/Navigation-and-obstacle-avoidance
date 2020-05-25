@@ -198,15 +198,19 @@ class ROBOT(pg.sprite.Sprite):
         degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
         point_x_c2r = int(self.robot_pose[0] + np.cos(degree_target)*self.radius_obs*0.9)
         point_y_c2r = int(self.robot_pose[1] + np.sin(degree_target)*self.radius_obs*0.9)
-        screen[point_y_c2r][point_x_c2r] = 0.0
-        screen[point_y_c2r +1][point_x_c2r] = 0.0
-        screen[point_y_c2r -1][point_x_c2r] = 0.0
-        screen[point_y_c2r][point_x_c2r+1] = 0.0
-        screen[point_y_c2r][point_x_c2r-1] = 0.0
-        screen[point_y_c2r+1][point_x_c2r+1] = 0.0
-        screen[point_y_c2r+1][point_x_c2r-1] = 0.0
-        screen[point_y_c2r-1][point_x_c2r+1] = 0.0
-        screen[point_y_c2r-1][point_x_c2r-1] = 0.0
+        try:
+            screen[point_y_c2r][point_x_c2r] = 0.0
+            screen[point_y_c2r +1][point_x_c2r] = 0.0
+            screen[point_y_c2r -1][point_x_c2r] = 0.0
+            screen[point_y_c2r][point_x_c2r+1] = 0.0
+            screen[point_y_c2r][point_x_c2r-1] = 0.0
+            screen[point_y_c2r+1][point_x_c2r+1] = 0.0
+            screen[point_y_c2r+1][point_x_c2r-1] = 0.0
+            screen[point_y_c2r-1][point_x_c2r+1] = 0.0
+            screen[point_y_c2r-1][point_x_c2r-1] = 0.0
+        except :
+            pass
+        
         # degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
         # degree_c2r = self.degree + degree_target*2
         # point_x_c2r = int(c_x + np.cos(degree_c2r)*r_half)
