@@ -27,7 +27,7 @@ class Actor:
         exploration, and balance it with Layer Normalization.
         """
         state_input = Input(shape= [self.env_dim], name='state_input')
-        X = Dense(128, activation = "relu")(state_input)
+        X = Dense(256, activation = "relu")(state_input)
         X = Dense(128, activation='relu')(X)
         Out = Dense(self.act_dim, activation='sigmoid', kernel_initializer=RandomUniform())(X)
         #continuous action
@@ -58,7 +58,8 @@ class Actor:
     def train(self, states, actions, grads):
         """ Actor Training
         """
-        self.adam_optimizer([states, grads])
+        loss = self.adam_optimizer([states, grads])
+        return np.sum(loss) #loss of each sample data
 
     def optimizer(self):
         """ Actor Optimizer
@@ -68,7 +69,8 @@ class Actor:
         # action_gdts = K.placeholder(shape= [self.env_dim])
         params_grad = tf.gradients(self.model.output, self.model.trainable_weights, -action_gdts)
         grads = zip(params_grad, self.model.trainable_weights)
-        return K.function(inputs=[self.model.input, action_gdts], outputs=[ K.constant(1)],updates=[tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
+        loss = K.categorical_crossentropy(action_gdts, self.model.output)
+        return K.function(inputs=[self.model.input, action_gdts], outputs=[loss],updates=[tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
         
 
     def save(self, filename):

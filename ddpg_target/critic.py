@@ -27,11 +27,11 @@ class Critic:
         """ Assemble Critic network to predict q-values
         """
         action_input = Input(shape = [self.act_dim])
-        X_2 = Dense(64, activation='relu')(action_input)
+        X_2 = Dense(128, activation='relu')(action_input)
         # X_2 = Dense(64, activation='relu')(X_2)
 
         state_input = Input(shape= [self.env_dim])
-        X_1 = Dense(64, activation='relu')(state_input)
+        X_1 = Dense(128, activation='relu')(state_input)
         # X_1 = Dense(64, activation='relu')(X_1)
 
         # X = concatenate([X_1, X_2])
