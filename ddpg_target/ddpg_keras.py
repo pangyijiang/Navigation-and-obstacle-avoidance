@@ -7,7 +7,7 @@ from .critic import Critic
 from memory_buffer import MemoryBuffer
 
 class DDPG:
-    batch_size = 32
+    batch_size = 64
     MEMORY_CAPACITY = 20000
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1

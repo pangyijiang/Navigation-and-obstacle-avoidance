@@ -35,7 +35,7 @@ def train(flag_train = False, flag_display = True):
                     return
             if(flag_train):
                 model_target.remember(state[0], act_values, reward, done, n_state[0])
-                if model_target.buffer.size() >= model_target.MEMORY_CAPACITY/10:
+                if model_target.buffer.size() >= model_target.MEMORY_CAPACITY/2:
                     loss_c, loss_a = model_target.learn()
                     loss_critic.append(loss_c); loss_actor.append(loss_a)
             state = n_state
@@ -46,9 +46,12 @@ def train(flag_train = False, flag_display = True):
         # model_target._epsilon_decay()
         if(episode%100 ==0 and episode!=0):
             model_target.save_weights()
-        print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon))
+        #print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon))
         if(flag_train) and len(loss_critic) != 0 and len(loss_actor) != 0:
+            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon), end="")
             print(', loss_c = %.3f, loss_a = %.3f' % (np.average(loss_critic), np.average(loss_actor)))
+        else:
+            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon))
     if(flag_train):
         model_target.save_weights()
         print("Training is completed...")
