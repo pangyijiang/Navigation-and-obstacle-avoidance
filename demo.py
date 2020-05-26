@@ -43,12 +43,12 @@ def train(flag_train = False, flag_display = True):
             step = j
             if done in ["loser", "winner"]:
                 break
-
+        # model_target._epsilon_decay()
         if(episode%100 ==0 and episode!=0):
             model_target.save_weights()
         print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon))
-        if(flag_train):
-            print(', loss_c = %.3f, loss_a = %.3f' % (np.average(loss_critic), np.average(loss_a)))
+        if(flag_train) and len(loss_critic) != 0 and len(loss_actor) != 0:
+            print(', loss_c = %.3f, loss_a = %.3f' % (np.average(loss_critic), np.average(loss_actor)))
     if(flag_train):
         model_target.save_weights()
         print("Training is completed...")

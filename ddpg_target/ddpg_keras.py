@@ -7,7 +7,7 @@ from .critic import Critic
 from memory_buffer import MemoryBuffer
 
 class DDPG:
-    batch_size = 64
+    batch_size = 32
     MEMORY_CAPACITY = 20000
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1
@@ -83,9 +83,14 @@ class DDPG:
         critic_target = self.bellman(rewards, q_values, dones)
         # Train both networks on sampled batch, update target networks
         loss_critic, loss_actor = self.update_models(states, actions, critic_target)
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        # if self.epsilon > self.epsilon_min:
+        #     self.epsilon *= self.epsilon_decay
+        self._epsilon_decay()
         return loss_critic, loss_actor
+
+    def _epsilon_decay(self):
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
     def save_weights(self, filename = 'model'):
         path = './paras/'
