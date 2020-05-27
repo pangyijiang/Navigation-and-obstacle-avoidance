@@ -7,13 +7,13 @@ from .critic import Critic
 from memory_buffer import MemoryBuffer
 
 class DDPG:
-    batch_size = 64
-    MEMORY_CAPACITY = 20000
+    batch_size = 32
+    MEMORY_CAPACITY = 4000
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1
-    epsilon_decay = 0.99995
+    epsilon_decay = 0.9999
 
-    def __init__(self, a_dim, s_dim, gamma = 0.9, lr = 0.0005, tau = 0.01):
+    def __init__(self, a_dim, s_dim, gamma = 0.9, lr = 0.001, tau = 0.01):
         """ Initialization
         """
         # Environment and A2C parameters
