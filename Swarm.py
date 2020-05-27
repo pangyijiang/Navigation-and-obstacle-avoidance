@@ -62,8 +62,8 @@ class SWARM():
         self.map.update_screen()
         #step 2
         for uav in self.uavs:
-            state, reward, done = uav.step_2()
-        return state, reward, done
+            state, reward, done, flag = uav.step_2()
+        return state, reward, done, flag
         #show min windows  - not suitable for multi-robots
 
 class ROBOT(pg.sprite.Sprite):
@@ -108,12 +108,13 @@ class ROBOT(pg.sprite.Sprite):
     def step_2(self):
         #cal "state, reward, done"
         state = self.state_cal()
-        reward, done = self.reward_cal()
-        return state, reward, done
+        reward, done, flag = self.reward_cal()
+        return state, reward, done, flag
 
     def reward_cal(self):
         reward = 0.0
         done = False
+        flag = False
         #distance with target 
         r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
         reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
@@ -125,16 +126,18 @@ class ROBOT(pg.sprite.Sprite):
         for obstacle_pos in self.map.obstacles.pos:
             r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
             if r <= self.r_margin:
-                reward += ( -(self.r_margin - r)/self.robot_size - 1.0)
+                reward += ( -(self.r_margin - r)/self.robot_size - 5.0)
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
-            reward += -2.0
+            flag = "loser"
+            reward += -5.0
         if self.flag_collision["gold"]:
-            reward += 2.0
+            flag = "winner"
+            reward += 5.0
         #collision with target
         if True in self.flag_collision.values():
             done = True
-        return reward, done
+        return reward, done, flag
     def state_cal(self):
         nei_region = self._obs()
         # #position

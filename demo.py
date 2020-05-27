@@ -5,7 +5,7 @@ from ddpg_target.ddpg_keras import DDPG as DDPG_target
 from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 
 
-def train(flag_train = True, flag_display = True):
+def train(flag_train = True, flag_display = False):
 # def train(flag_train = False, flag_display = True):
     MAX_EPISODES = 1000
     MAX_EP_STEPS = 200
@@ -31,7 +31,7 @@ def train(flag_train = True, flag_display = True):
         for j in range(MAX_EP_STEPS):
             # act_values, action = model_target.step(state[0], flag_train)
             act_values, action = model_obstacle.step(state[1], flag_train)
-            n_state, reward, done = env.swarm.swarm_step([action])
+            n_state, reward, done, flag = env.swarm.swarm_step([action])
             if flag_display:
                 env.pg_update()
                 flag_running = env.pg_event()
@@ -57,10 +57,10 @@ def train(flag_train = True, flag_display = True):
             model_obstacle.save_weights("model_obstacle")
         #print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_target.epsilon))
         if(flag_train) and len(loss_critic) != 0 and len(loss_actor) != 0:
-            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_obstacle.epsilon), end="")
+            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, flag, ep_reward, step, model_obstacle.epsilon), end="")
             print(', loss_c = %.3f, loss_a = %.3f' % (np.average(loss_critic), np.average(loss_actor)))
         else:
-            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, done, ep_reward, step, model_obstacle.epsilon))
+            print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, flag, ep_reward, step, model_obstacle.epsilon))
     if(flag_train):
         # model_target.save_weights("model_target")
         model_obstacle.save_weights("model_target")
