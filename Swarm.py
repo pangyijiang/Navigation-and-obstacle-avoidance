@@ -12,7 +12,7 @@ class SWARM():
     r_comm = 200 #communication radius
     flag_show_comm = False   #show comm radius
     flag_show_data = False   #show data
-    robot_size = 10 
+    robot_size = 15
     
     def __init__(self, map, num_uavs = 5):
         self.map = map
@@ -116,7 +116,7 @@ class ROBOT(pg.sprite.Sprite):
         done = False
         #distance with target 
         r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
-        reward += -r#-r*5/(np.sum(self.map.MAP_SIZE)/2)
+        reward += -r*0.01#-r*5/(np.sum(self.map.MAP_SIZE)/2)
         #out of map
         # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
         #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
@@ -131,8 +131,7 @@ class ROBOT(pg.sprite.Sprite):
         #     done = "loser"
         #     reward += -5.0
         #collision with target
-        if self.flag_collision["gold"]:
-            reward += 1.0
+        if True in self.flag_collision.values():
             done = "winner"
         return reward, done
     def state_cal(self):
@@ -152,9 +151,29 @@ class ROBOT(pg.sprite.Sprite):
     def _status_update(self, action):
         assert action in [i for i in range(self.map.n_action)]
         degree_f = np.pi/4*action
-        # degree_f = self.degree + np.pi/4*action
         p_force = np.array([np.cos(degree_f), np.sin(degree_f)])
         self._robot_clk(p_force*self.p_force_gain)
+        """
+        assert action in [i for i in range(self.map.n_action)]
+        action =  np.eye(self.map.n_action)[action]
+        if action[0] == 1.0:
+            p_force = np.array([0.0, 1.0])
+        elif action[1] == 1.0:
+            p_force = np.array([0.0, -1.0])
+        elif action[2] == 1.0:
+            p_force = np.array([-1.0, 0.0])
+        elif action[3] == 1.0:
+            p_force = np.array([1.0, 0.0])
+        elif action[4] == 1.0:
+            p_force = np.array([0.707, 0.707])
+        elif action[5] == 1.0:
+            p_force = np.array([-0.707, 0.707])
+        elif action[6] == 1.0:
+            p_force = np.array([-0.707, -0.707])
+        elif action[7] == 1.0:
+            p_force = np.array([0.707, -0.707])
+        self._robot_clk(p_force*self.p_force_gain)
+        """
         
     def _robot_clk(self, p_force):
         # integrate physical state

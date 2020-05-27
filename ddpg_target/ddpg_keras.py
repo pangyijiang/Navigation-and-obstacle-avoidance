@@ -8,7 +8,7 @@ from memory_buffer import MemoryBuffer
 
 class DDPG:
     batch_size = 32
-    MEMORY_CAPACITY = 4000
+    MEMORY_CAPACITY = 2000
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1
     epsilon_decay = 0.9999
@@ -22,8 +22,8 @@ class DDPG:
         self.gamma = gamma
         self.lr = lr
         # Create actor and critic networks
-        self.actor = Actor(self.s_dim, a_dim, 0.5 * lr, tau)
-        self.critic = Critic(self.s_dim, a_dim, lr, tau)
+        self.actor = Actor(self.s_dim, a_dim, lr, tau)
+        self.critic = Critic(self.s_dim, a_dim, lr*2, tau)
         self.buffer = MemoryBuffer(self.MEMORY_CAPACITY)
 
     def policy_action(self, s):
@@ -89,8 +89,8 @@ class DDPG:
         return loss_critic, loss_actor
 
     def _epsilon_decay(self):
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
 
     def save_weights(self, filename = 'model'):
         path = './paras/'

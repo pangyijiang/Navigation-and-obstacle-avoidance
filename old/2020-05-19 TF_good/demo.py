@@ -10,7 +10,7 @@ file_para = "mymodel"
 1. modify the env , a independent thread. hold the speed with 1 second, beyond 1 second without command, decrease the speed.
 """
 
-def train(flag_train = False, flag_display = True):
+def train(flag_train = True, flag_display = False):
     MAX_EPISODES = 1000
     MAX_EP_STEPS = 200
     env = ENV(flag_display)
