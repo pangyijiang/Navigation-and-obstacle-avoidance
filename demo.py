@@ -35,7 +35,7 @@ def train(flag_train = True, flag_display = True):
                     return
             if(flag_train):
                 model_target.remember(state[0], act_values, reward, done, n_state[0])
-                if model_target.buffer.size() >= model_target.MEMORY_CAPACITY/2:
+                if model_target.buffer.size() >= model_target.MEMORY_CAPACITY:
                     loss_c, loss_a = model_target.learn()
                     loss_critic.append(loss_c); loss_actor.append(loss_a)
             state = n_state

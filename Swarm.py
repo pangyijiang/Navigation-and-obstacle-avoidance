@@ -136,7 +136,7 @@ class ROBOT(pg.sprite.Sprite):
             done = True
         return reward, done
     def state_cal(self):
-        nei_region = self._obs()
+        nei_region = 1.0#self._obs()
         # #position
         dir = (self.robot_goal - self.robot_pose)
         dir = dir/np.sqrt(np.sum(np.square(dir)))  #scale
