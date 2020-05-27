@@ -12,7 +12,7 @@ class SWARM():
     r_comm = 200 #communication radius
     flag_show_comm = False   #show comm radius
     flag_show_data = False   #show data
-    robot_size = 15
+    robot_size = 10
     
     def __init__(self, map, num_uavs = 5):
         self.map = map
@@ -116,23 +116,24 @@ class ROBOT(pg.sprite.Sprite):
         done = False
         #distance with target 
         r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
-        reward += -r*0.01#-r*5/(np.sum(self.map.MAP_SIZE)/2)
+        reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
         #out of map
-        # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
-        #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
-        #     reward += -r/(np.sum(self.map.MAP_SIZE)/2)
-        # #
-        # for obstacle_pos in self.map.obstacles.pos:
-        #     r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
-        #     if r <= self.r_margin:
-        #         reward += ( -(self.r_margin - r)/self.robot_size -5.0)
-        # #collision with obstacle
-        # if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
-        #     done = "loser"
-        #     reward += -5.0
+        if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
+            r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
+            reward += -r/(np.sum(self.map.MAP_SIZE)/2)
+        #
+        for obstacle_pos in self.map.obstacles.pos:
+            r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
+            if r <= self.r_margin:
+                reward += ( -(self.r_margin - r)/self.robot_size - 1.0)
+        #collision with obstacle
+        if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
+            reward += -2.0
+        if self.flag_collision["gold"]:
+            reward += 2.0
         #collision with target
         if True in self.flag_collision.values():
-            done = "winner"
+            done = True
         return reward, done
     def state_cal(self):
         nei_region = self._obs()

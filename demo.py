@@ -41,7 +41,7 @@ def train(flag_train = True, flag_display = True):
             state = n_state
             ep_reward += reward
             step = j
-            if done in ["loser", "winner"]:
+            if done:
                 break
         # model_target._epsilon_decay()
         if(episode%100 ==0 and episode!=0):
