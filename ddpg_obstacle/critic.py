@@ -26,11 +26,6 @@ class Critic:
     def network(self):
         """ Assemble Critic network to predict q-values
         """
-        # state_input_0 = Input(shape= self.env_dim[0])
-        # X_0 = Dense(256, activation = "relu")(state_input_0)
-        # X_0 = Dropout(rate=0.3)(X_0)
-        # X_0 = Dense(128, activation='relu')(X_0)
-
         action_input = Input(shape = [self.act_dim])
         X_2 = Dense(256, activation='relu')(action_input)
         X_2 = Dropout(rate=0.3)(X_2)
@@ -81,7 +76,7 @@ class Critic:
         # X = ReLU()(X)
         X = Dense(128, activation='relu')(X)
         x = Dense(64, activation='relu')(X)
-        out = Dense(1, activation='linear', kernel_initializer=RandomUniform())(X)
+        out = Dense(1, activation='linear')(X)
 
         model = Model([state_input, action_input], out)
         model.compile(loss='mse', optimizer=Adam(lr=self.lr))
@@ -90,37 +85,16 @@ class Critic:
     def gradients(self, states, actions):
         """ Compute Q-value gradients w.r.t. states and policy-actions
         """
-        # batch_state_1, batch_state_2= [],[]
-        # for i in states:
-        #     batch_state_1.append(i[0])
-        #     batch_state_2.append(i[1])
-        # batch_state_1 = np.array(batch_state_1)
-        # batch_state_2 = np.array(batch_state_2)
-
         return self.action_grads([states, actions])
 
     def target_predict(self, inp):
         """ Predict Q-Values using the target network
         """
-        # batch_state_1, batch_state_2= [],[]
-        # for i in inp[0]:
-        #     batch_state_1.append(i[0])
-        #     batch_state_2.append(i[1])
-        # batch_state_1 = np.array(batch_state_1)
-        # batch_state_2 = np.array(batch_state_2)
-        # return self.target_model.predict([batch_state_1, batch_state_2, inp[1]])
         return self.target_model.predict(inp)
 
     def train_on_batch(self, states, actions, critic_target):
         """ Train the critic network on batch of sampled experience
         """
-        # batch_state_1, batch_state_2= [],[]
-        # for i in states:
-        #     batch_state_1.append(i[0])
-        #     batch_state_2.append(i[1])
-        # batch_state_1 = np.array(batch_state_1)
-        # batch_state_2 = np.array(batch_state_2)
-
         return self.model.train_on_batch([states, actions], critic_target)
 
     def transfer_weights(self):

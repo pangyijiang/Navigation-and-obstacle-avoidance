@@ -136,7 +136,7 @@ class ROBOT(pg.sprite.Sprite):
             done = True
         return reward, done
     def state_cal(self):
-        nei_region = 1.0#self._obs()
+        nei_region = self._obs()
         # #position
         dir = (self.robot_goal - self.robot_pose)
         dir = dir/np.sqrt(np.sum(np.square(dir)))  #scale
@@ -154,27 +154,6 @@ class ROBOT(pg.sprite.Sprite):
         degree_f = np.pi/4*action
         p_force = np.array([np.cos(degree_f), np.sin(degree_f)])
         self._robot_clk(p_force*self.p_force_gain)
-        """
-        assert action in [i for i in range(self.map.n_action)]
-        action =  np.eye(self.map.n_action)[action]
-        if action[0] == 1.0:
-            p_force = np.array([0.0, 1.0])
-        elif action[1] == 1.0:
-            p_force = np.array([0.0, -1.0])
-        elif action[2] == 1.0:
-            p_force = np.array([-1.0, 0.0])
-        elif action[3] == 1.0:
-            p_force = np.array([1.0, 0.0])
-        elif action[4] == 1.0:
-            p_force = np.array([0.707, 0.707])
-        elif action[5] == 1.0:
-            p_force = np.array([-0.707, 0.707])
-        elif action[6] == 1.0:
-            p_force = np.array([-0.707, -0.707])
-        elif action[7] == 1.0:
-            p_force = np.array([0.707, -0.707])
-        self._robot_clk(p_force*self.p_force_gain)
-        """
         
     def _robot_clk(self, p_force):
         # integrate physical state
@@ -197,22 +176,22 @@ class ROBOT(pg.sprite.Sprite):
         screen = screen.convert('L')
         screen = np.array(screen)
         r_half = int(self.radius_obs/2)
-        #add direction point to obs_img
-        # degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
-        # point_x_c2r = int(self.robot_pose[0] + np.cos(degree_target)*self.radius_obs*0.9)
-        # point_y_c2r = int(self.robot_pose[1] + np.sin(degree_target)*self.radius_obs*0.9)
-        # try:
-        #     screen[point_y_c2r][point_x_c2r] = 0.0
-        #     screen[point_y_c2r +1][point_x_c2r] = 0.0
-        #     screen[point_y_c2r -1][point_x_c2r] = 0.0
-        #     screen[point_y_c2r][point_x_c2r+1] = 0.0
-        #     screen[point_y_c2r][point_x_c2r-1] = 0.0
-        #     screen[point_y_c2r+1][point_x_c2r+1] = 0.0
-        #     screen[point_y_c2r+1][point_x_c2r-1] = 0.0
-        #     screen[point_y_c2r-1][point_x_c2r+1] = 0.0
-        #     screen[point_y_c2r-1][point_x_c2r-1] = 0.0
-        # except :
-        #     pass
+        # add direction point to obs_img
+        degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
+        point_x_c2r = int(self.robot_pose[0] + np.cos(degree_target)*self.radius_obs*0.9)
+        point_y_c2r = int(self.robot_pose[1] + np.sin(degree_target)*self.radius_obs*0.9)
+        try:
+            screen[point_y_c2r][point_x_c2r] = 10.0
+            screen[point_y_c2r +1][point_x_c2r] = 10.0
+            screen[point_y_c2r -1][point_x_c2r] = 10.0
+            screen[point_y_c2r][point_x_c2r+1] = 10.0
+            screen[point_y_c2r][point_x_c2r-1] = 10.0
+            screen[point_y_c2r+1][point_x_c2r+1] = 10.0
+            screen[point_y_c2r+1][point_x_c2r-1] = 10.0
+            screen[point_y_c2r-1][point_x_c2r+1] = 10.0
+            screen[point_y_c2r-1][point_x_c2r-1] = 10.0
+        except :
+            pass
         
         # degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
         # degree_c2r = self.degree + degree_target*2
