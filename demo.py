@@ -10,7 +10,7 @@ def train(flag_train_target = False, flag_train_obstacle = True, flag_display = 
     flag_model = [True , True, False]
     MAX_EPISODES = 1000
     MAX_EP_STEPS = 200
-    env = ENV(15, flag_display) 
+    env = ENV(20, flag_display) 
     model_target = DDPG_target(env.n_action, 8)
     model_obstacle = DDPG_obstacle(env.n_action, (128,128,1))
     if(not flag_train_target) and flag_model[0]:
