@@ -154,7 +154,8 @@ class ROBOT(pg.sprite.Sprite):
 
     def _status_update(self, action):
         assert action in [i for i in range(self.map.n_action)]
-        degree_f = np.pi/4*action
+        # degree_f = np.pi/4*action
+        degree_f = self.degree + np.pi/4*action
         p_force = np.array([np.cos(degree_f), np.sin(degree_f)])
         self._robot_clk(p_force*self.p_force_gain)
         

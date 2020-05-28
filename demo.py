@@ -5,7 +5,7 @@ from ddpg_target.ddpg_keras import DDPG as DDPG_target
 from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 
 
-def train(flag_train = True, flag_display = False):
+def train(flag_train = False, flag_display = False):
 # def train(flag_train = False, flag_display = True):
     MAX_EPISODES = 1000
     MAX_EP_STEPS = 200
@@ -13,8 +13,8 @@ def train(flag_train = True, flag_display = False):
     #model_target = DDPG_target(env.n_action, 8)
     model_obstacle = DDPG_obstacle(env.n_action, (128,128,1))
     if(not flag_train):
-        # model_target.load_weights()
-        model_obstacle.load_weights()
+        # model_target.load_weights("model_target")
+        model_obstacle.load_weights("model_obstacle")
     
     for episode in range(MAX_EPISODES):
         #reset env
@@ -63,7 +63,7 @@ def train(flag_train = True, flag_display = False):
             print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, flag, ep_reward, step, model_obstacle.epsilon))
     if(flag_train):
         # model_target.save_weights("model_target")
-        model_obstacle.save_weights("model_target")
+        model_obstacle.save_weights("model_obstacle")
         print("Training is completed...")
 
 

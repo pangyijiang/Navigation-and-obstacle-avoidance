@@ -27,37 +27,24 @@ class Critic:
         """ Assemble Critic network to predict q-values
         """
         action_input = Input(shape = [self.act_dim])
-        X_2 = Dense(256, activation='relu')(action_input)
-        X_2 = Dropout(rate=0.3)(X_2)
-        X_2 = Dense(128, activation='relu')(X_2)
+        X_2 = Dense(128, activation='linear')(action_input)
 
         state_input = Input(shape= self.env_dim)
-        X_1 = Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(state_input)
-        X_1= Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= BatchNormalization(momentum=0.15)(X_1)
-        X_1= MaxPool2D(pool_size=(2, 2))(X_1)
-        X_1= Conv2D(filters=4, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
-        X_1= BatchNormalization(momentum=0.15)(X_1)
-        X_1= Dropout(rate=0.3)(X_1)
-
-        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1 = Conv2D(filters=8, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(state_input)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=8, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=16, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=16, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=32, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=32, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
@@ -65,16 +52,10 @@ class Critic:
         X_1= Dropout(rate=0.3)(X_1)
 
         X_1= Flatten()(X_1)
-        X_1= Dense(256, activation = "relu")(X_1)
-        X_1= Dropout(rate=0.3)(X_1)
-        X_1= Dense(128, activation='relu')(X_1)
+        X_1= Dense(128, activation = "linear")(X_1)
 
-        
-
-        X = concatenate([X_1, X_2])
-        # X= Add()([X_1, X_2]) 
-        # X = ReLU()(X)
-        X = Dense(128, activation='relu')(X)
+        X= Add()([X_1, X_2]) 
+        X = ReLU()(X)
         x = Dense(64, activation='relu')(X)
         out = Dense(1, activation='linear')(X)
 

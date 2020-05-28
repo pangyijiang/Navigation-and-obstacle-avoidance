@@ -27,32 +27,21 @@ class Actor:
         exploration, and balance it with Layer Normalization.
         """
         state_input = Input(shape= self.env_dim, name='state_input')
-        X_1 = Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(state_input)
-        X_1= Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= BatchNormalization(momentum=0.15)(X_1)
-        X_1= MaxPool2D(pool_size=(2, 2))(X_1)
-        X_1= Conv2D(filters=4, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
-        X_1= BatchNormalization(momentum=0.15)(X_1)
-        X_1= Dropout(rate=0.3)(X_1)
-
-        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1 = Conv2D(filters=8, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(state_input)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=8, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=16, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=16, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
-        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=32, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=32, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
@@ -60,10 +49,7 @@ class Actor:
         X_1= Dropout(rate=0.3)(X_1)
 
         X_1= Flatten()(X_1)
-        X_1= Dense(256, activation = "relu")(X_1)
-        X_1= Dropout(rate=0.3)(X_1)
-        X_1= Dense(128, activation='relu')(X_1)
-        X_1= Dropout(rate=0.3)(X_1)
+        X_1= Dense(128, activation = "relu")(X_1)
         X_1= Dense(64, activation='relu')(X_1)
         Out = Dense(self.act_dim, activation='sigmoid')(X_1)
         #continuous action
