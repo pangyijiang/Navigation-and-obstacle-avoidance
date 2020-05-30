@@ -5,7 +5,7 @@ import keras.backend as K
 from keras.initializers import RandomUniform
 from keras.models import Model
 from keras.optimizers import Adam
-from keras.layers import Input, Dense, concatenate, LSTM, Reshape, BatchNormalization, Lambda, Flatten, Add, ReLU
+from keras.layers import Input, Dense, Concatenate, LSTM, Reshape, BatchNormalization, Lambda, Flatten, Add, ReLU
 from keras.layers import Conv2D, MaxPool2D, Dropout
 
 class Critic:

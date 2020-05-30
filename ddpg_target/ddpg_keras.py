@@ -71,8 +71,8 @@ class DDPG:
         if np.random.rand() <= self.epsilon and flag_train:
             p = np.random.randint(0 , self.a_dim)
             act_values[p] = 1.0
-        action = np.argmax(act_values)
-        return act_values, action
+        #action = np.argmax(act_values)
+        return act_values
 
     def learn(self):
         # Sample experience from buffer

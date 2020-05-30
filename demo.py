@@ -8,14 +8,14 @@ from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 # def train(flag_train = False, flag_display = False):
 def train(flag_train_target = False, flag_train_obstacle = True, flag_display = False):
     flag_model = [True , True, False]
-    MAX_EPISODES = 1000
+    MAX_EPISODES = 5000
     MAX_EP_STEPS = 200
     env = ENV(20, flag_display) 
     model_target = DDPG_target(env.n_action, 8)
     model_obstacle = DDPG_obstacle(env.n_action, (128,128,1))
-    if(not flag_train_target) and flag_model[0]:
+    if flag_model[0]:
         model_target.load_weights("model_target")
-    if(not flag_train_obstacle) and flag_model[1]:
+    if flag_model[1]:
         model_obstacle.load_weights("model_obstacle")
     
     for episode in range(MAX_EPISODES):
@@ -32,11 +32,11 @@ def train(flag_train_target = False, flag_train_obstacle = True, flag_display = 
         for j in range(MAX_EP_STEPS):
             action = []
             if flag_model[0]:
-                act_values_target, action_target = model_target.step(state[0], flag_train_target)
-                action.append(action_target)
+                act_values_target = model_target.step(state[0], flag_train_target)
+                action.append(act_values_target)
             if flag_model[1]:
-                act_values_obstacle, action_obstacle = model_obstacle.step(state[1], flag_train_obstacle)
-                action.append(action_obstacle)
+                act_values_obstacle = model_obstacle.step(state[1], flag_train_obstacle)
+                action.append(act_values_obstacle)
             
             n_state, reward, done, flag = env.swarm.swarm_step([action])
 

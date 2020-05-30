@@ -154,20 +154,21 @@ class ROBOT(pg.sprite.Sprite):
 
     def _status_update(self, action):
         #action = [action_target, action_obstacle]
-        action_target = action[0]
+        action_target = np.argmax(action[0])  
         assert action_target in [i for i in range(self.map.n_action)]
         degree_f_target = np.pi/4*action_target
-        p_force_action_target = np.array([np.cos(degree_f_target), np.sin(degree_f_target)])
+        p_force = np.array([np.cos(degree_f_target), np.sin(degree_f_target)])
 
         try:
-            action_obstacle = action[1]
-            assert action_obstacle in [i for i in range(self.map.n_action)]
-            degree_f_obstacle = self.degree + np.pi/4*action_obstacle
-            p_force_action_obstacle = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
-        finally:
-            p_force_action_obstacle = np.zeros(2)
+            action_lel = np.argmax(action[1][-1])
+            if action_lel > 0.5:
+                action_obstacle = np.argmax(action[1][:-1])
+                assert action_obstacle in [i for i in range(self.map.n_action)]
+                degree_f_obstacle = self.degree + np.pi/4*action_obstacle
+                p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
+        except:
+            pass
         
-        p_force = p_force_action_target + p_force_action_obstacle
         self._robot_clk(p_force*self.p_force_gain)
         
     def _robot_clk(self, p_force):
