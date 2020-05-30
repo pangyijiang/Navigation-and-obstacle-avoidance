@@ -133,7 +133,7 @@ class ROBOT(pg.sprite.Sprite):
             reward += -5.0
         if self.flag_collision["gold"]:
             flag = "winner"
-            reward += 5.0
+            reward += 10.0
         #collision with target
         if True in self.flag_collision.values():
             done = True
@@ -163,8 +163,8 @@ class ROBOT(pg.sprite.Sprite):
             action_lel = np.argmax(action[1][-1])
             if action_lel > 0.5:
                 action_obstacle = np.argmax(action[1][:-1])
-                assert action_obstacle in [i for i in range(self.map.n_action)]
-                degree_f_obstacle = self.degree + np.pi/4*action_obstacle
+                assert action_obstacle in [i for i in range(2)]
+                degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action_obstacle)
                 p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
         except:
             pass

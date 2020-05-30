@@ -12,7 +12,7 @@ def train(flag_train_target = False, flag_train_obstacle = True, flag_display = 
     MAX_EP_STEPS = 200
     env = ENV(20, flag_display) 
     model_target = DDPG_target(env.n_action, 8)
-    model_obstacle = DDPG_obstacle(env.n_action, (128,128,1))
+    model_obstacle = DDPG_obstacle(2, (128,128,1))
     if flag_model[0]:
         model_target.load_weights("model_target")
     if flag_model[1]:
