@@ -96,7 +96,7 @@ class ROBOT(pg.sprite.Sprite):
         self.robot_size = robot_size 
         self.rect = pg.Rect(0, 0, self.robot_size*2, self.robot_size*2)
         self.rect.center = self.robot_pose
-        self.r_margin = (self.robot_size + self.map.obstacles.size + self.robot_size) #min distance to  obstacle
+        self.r_margin = (self.robot_size + self.map.obstacles.size + self.robot_size*2) #min distance to  obstacle
 
     def step_1(self, action):
         #exchange info with neighbors
@@ -115,25 +115,25 @@ class ROBOT(pg.sprite.Sprite):
         reward = 0.0
         done = False
         flag = False
-        #distance with target 
-        r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
-        reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
-        #out of map
-        if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
-            r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
-            reward += -r/(np.sum(self.map.MAP_SIZE)/2)
+        # #distance with target 
+        # r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
+        # reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
+        # #out of map
+        # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
+        #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
+        #     reward += -r/(np.sum(self.map.MAP_SIZE)/2)
         #
         for obstacle_pos in self.map.obstacles.pos:
             r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
             if r <= self.r_margin:
-                reward += ( -(self.r_margin - r)/self.robot_size - 5.0)
+                reward +=  -5*(self.r_margin - r)/(self.robot_size*2)
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             flag = "loser"
-            reward += -5.0
+            #reward += -5.0
         if self.flag_collision["gold"]:
             flag = "winner"
-            reward += 10.0
+            #reward += 5.0
         #collision with target
         if True in self.flag_collision.values():
             done = True

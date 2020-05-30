@@ -6,7 +6,7 @@ from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 
 
 # def train(flag_train = False, flag_display = False):
-def train(flag_train_target = False, flag_train_obstacle = True, flag_display = False):
+def train(flag_train_target = False, flag_train_obstacle = True, flag_display = True):
     flag_model = [True , True, False]
     MAX_EPISODES = 5000
     MAX_EP_STEPS = 200
