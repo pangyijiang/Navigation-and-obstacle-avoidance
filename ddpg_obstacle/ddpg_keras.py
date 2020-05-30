@@ -8,7 +8,7 @@ from memory_buffer import MemoryBuffer
 
 class DDPG:
     batch_size = 32
-    MEMORY_CAPACITY = 2000
+    MEMORY_CAPACITY = 200
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1
     epsilon_decay = 0.9999
@@ -58,7 +58,7 @@ class DDPG:
         # Q-Value Gradients under Current Policy
         actions = self.actor.model.predict(states)
         grads = self.critic.gradients(states, actions)
-        grads_action = np.array(grads).reshape((-1, self.a_dim))
+        grads_action = np.array(grads).reshape((-1, self.a_dim+1))
         # Train actor
         loss_actor = self.actor.train(states, actions, grads_action)
         # Transfer weights to target networks at rate Tau
