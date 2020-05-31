@@ -28,13 +28,13 @@ class ENV():
             def __init__(self, map_size, num = 5):
                 self.num = num
                 self.size = 10
-                self.color = (211, 211, 211)    #light grey
+                self.color = (190, 190, 190)    #light grey
                 self.pos = [np.array([np.random.randint(0, map_size[0]), np.random.randint(0, map_size[1])]) for i in range(num)]
         
         class Gold():
             def __init__(self, map_size):
                 self.size = 10
-                self.color = (105, 105, 105)    #dim grey
+                self.color = (0, 205, 102)    #dim grey
                 self.pos = np.array([np.random.randint(0, map_size[0]), np.random.randint(0, map_size[1])])
         while True:
             self.obstacles = Obstacles(self.MAP_SIZE, self.num_obstacle)

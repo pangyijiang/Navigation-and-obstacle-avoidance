@@ -8,7 +8,7 @@ from memory_buffer import MemoryBuffer
 
 class DDPG:
     batch_size = 32
-    MEMORY_CAPACITY = 2000
+    MEMORY_CAPACITY = 200
     epsilon = 1.0  # exploration rate
     epsilon_min = 0.1
     epsilon_decay = 0.9999

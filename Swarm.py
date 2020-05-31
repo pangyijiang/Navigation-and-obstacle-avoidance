@@ -70,7 +70,7 @@ class ROBOT(pg.sprite.Sprite):
     info_pkg_s = {}
     info_pkg_r = {}
     comm_delay = 0.5    #delay time of communication
-    robot_color  = (0, 0, 255)  #blue
+    robot_color  = (65,105,225)  #DeepSkyBlue
     flag_collision = {"uav":True, "obstacle":False, "gold":False}
     radius_obs = 128
     #physical state
@@ -115,13 +115,13 @@ class ROBOT(pg.sprite.Sprite):
         reward = 0.0
         done = False
         flag = False
-        # #distance with target 
-        # r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
-        # reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
-        # #out of map
-        # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
-        #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
-        #     reward += -r/(np.sum(self.map.MAP_SIZE)/2)
+        #distance with target 
+        r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
+        reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
+        #out of map
+        if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
+            r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
+            reward += -r/(np.sum(self.map.MAP_SIZE)/2)
         #
         for obstacle_pos in self.map.obstacles.pos:
             r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
@@ -130,10 +130,10 @@ class ROBOT(pg.sprite.Sprite):
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             flag = "loser"
-            #reward += -5.0
+            reward += -5.0
         if self.flag_collision["gold"]:
             flag = "winner"
-            #reward += 5.0
+            reward += 5.0
         #collision with target
         if True in self.flag_collision.values():
             done = True
@@ -164,7 +164,8 @@ class ROBOT(pg.sprite.Sprite):
             if action_lel > 0.5:
                 action_obstacle = np.argmax(action[1][:-1])
                 assert action_obstacle in [i for i in range(2)]
-                degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action_obstacle)
+                # degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action_obstacle)
+                degree_f_obstacle = self.degree + np.pi/4*action_obstacle
                 p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
         except:
             pass
@@ -189,7 +190,7 @@ class ROBOT(pg.sprite.Sprite):
     def _obs(self):
         data = pg.image.tostring(self.map.screen, 'RGB')
         screen = Image.frombytes('RGB', self.map.MAP_SIZE, data)
-        screen = screen.convert('L')
+        # screen = screen.convert('L')
         screen = np.array(screen)
         r_half = int(self.radius_obs/2)
         # add direction point to obs_img
@@ -224,7 +225,7 @@ class ROBOT(pg.sprite.Sprite):
         # screen[point_y_c2r-1][point_x_c2r+1] = 0.0
         # screen[point_y_c2r-1][point_x_c2r-1] = 0.0
 
-        obs_img = np.zeros((self.radius_obs, self.radius_obs))
+        obs_img = np.zeros((self.radius_obs, self.radius_obs, 3), dtype="uint8")
         for i in range(self.radius_obs):
             c_x = self.robot_pose[0] + np.cos(self.degree)*i
             c_y = self.robot_pose[1] + np.sin(self.degree)*i
@@ -234,28 +235,30 @@ class ROBOT(pg.sprite.Sprite):
                 point_2_x = int( c_x + np.cos(self.degree - np.pi/2)*j )
                 point_2_y = int( c_y + np.sin(self.degree - np.pi/2)*j )
 
-                try:
-                    obs_img[r_half - j][i] = screen[point_2_y][point_2_x] 
-                    obs_img[r_half + j][i] = screen[point_1_y][point_1_x]
-                except:
-                    obs_img[r_half - j][i] = 0.0
-                    obs_img[r_half + j][i] = 0.0
+                if point_2_y in range(0,screen.shape[0]) and point_2_x in range(0,screen.shape[1]):
+                    obs_img[r_half - j][i][:] = screen[point_2_y][point_2_x][:]
+                else:
+                    obs_img[r_half - j][i][:] = 0.0
+                if point_1_y in range(0,screen.shape[0]) and point_1_x in range(0,screen.shape[1]):
+                    obs_img[r_half + j][i][:] = screen[point_1_y][point_1_x][:]
+                else:
+                    obs_img[r_half + j][i][:] = 0.0
                 
         #test obs
         # im=Image.fromarray(obs_img)
         # im = im.convert("RGB").tobytes("raw", 'RGB')
         # im = pg.image.fromstring(im, (self.radius_obs, self.radius_obs), "RGB")
         # self.map.screen.blit(im, (0,0))
-        # flag = False
-        # if flag:
-        #     import matplotlib.pyplot as plt
-        #     fig = plt.figure()
-        #     subplt0 = fig.add_subplot(121)
-        #     subplt0.imshow(obs_img, cmap='gray')
-        #     subplt1 = fig.add_subplot(122)
-        #     subplt1.imshow(screen, cmap='gray')
-        #     plt.show()
-        obs_img = obs_img[:, :, np.newaxis]
+        flag = False
+        if flag:
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
+            subplt0 = fig.add_subplot(121)
+            subplt0.imshow(obs_img)
+            subplt1 = fig.add_subplot(122)
+            subplt1.imshow(screen)
+            plt.show()
+        #obs_img = obs_img[:, :, np.newaxis]
         obs_img = (obs_img - 127.0)/255.0 #scale
 
         return obs_img
