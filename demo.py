@@ -7,7 +7,7 @@ from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 # def train(flag_train = False, flag_display = False):
 def train(flag_train_obstacle = True, flag_display = False):
     MAX_EPISODES = 5000
-    MAX_EP_STEPS = 50
+    MAX_EP_STEPS = 100
     env = ENV(15, flag_display) 
     model_obstacle = DDPG_obstacle(3, (128,128,3))
     model_obstacle.load_weights("model_obstacle")

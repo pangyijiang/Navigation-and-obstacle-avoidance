@@ -28,7 +28,7 @@ class SWARM():
         pose_set,vel_set = self._init_pos_vel(self.num_uavs)
         for i in range(self.num_uavs):
             name = "robot_%d" % i
-            pose = np.array([self.map.MAP_SIZE[0]/2, self.map.MAP_SIZE[1]/2])
+            pose = np.array([self.map.MAP_SIZE[0]/2, self.robot_size*4])
             vel = np.zeros(2)
             self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose,vel))
             state.append(self.uavs[i].state_cal())
@@ -132,10 +132,10 @@ class ROBOT(pg.sprite.Sprite):
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             flag = "loser"
-            reward += -5.0
+            #reward += -5.0
         if self.flag_collision["gold"]:
             flag = "winner"
-            reward += 5.0
+            #reward += 5.0
         #collision with target
         if True in self.flag_collision.values():
             done = True
