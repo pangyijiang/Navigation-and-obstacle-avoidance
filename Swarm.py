@@ -119,20 +119,27 @@ class ROBOT(pg.sprite.Sprite):
         flag = False
         #distance with target 
         r = np.sqrt(np.square(self.robot_goal[0] - self.map.MAP_SIZE[0]))
-        reward += -r*5/((self.map.MAP_SIZE[0])/2)
+        reward += -r*2/((self.map.MAP_SIZE[0])/2)
         # #out of map
         # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
         #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
         #     reward += -r/(np.sum(self.map.MAP_SIZE)/2)
         #
         for obstacle_pos in self.map.obstacles.pos:
+            r_x = np.sqrt(np.square(self.robot_pose[0] - obstacle_pos[0]))
+            r_y = np.sqrt(np.square(self.robot_pose[1] - obstacle_pos[1]))
             r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
-            if r <= self.r_margin:
-                reward +=  -5*(self.r_margin - r)/(self.robot_size*2)
+            if obstacle_pos[1] - self.robot_pose[1] > -(self.robot_size + self.map.obstacles.size) \
+                and r < self.r_margin:
+                reward +=  -2*(self.r_margin - r)/(self.robot_size*2) - 2
+            if obstacle_pos[1] - self.robot_pose[1] > self.r_margin \
+                and r_x <= (self.robot_size + self.map.obstacles.size) \
+                and r_y <= self.r_margin+self.robot_size*2:
+                reward +=  -2*(self.robot_size + self.map.obstacles.size - r_x)/(self.robot_size + self.map.obstacles.size) - 2
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             flag = "loser"
-            #reward += -5.0
+            # reward += -4.0
         if self.flag_collision["gold"]:
             flag = "winner"
             #reward += 5.0
