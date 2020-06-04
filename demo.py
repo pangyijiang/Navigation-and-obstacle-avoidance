@@ -4,8 +4,8 @@ import numpy as np
 from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
 
 
-def train(flag_train_obstacle = True, flag_display = True):
-# def train(flag_train_obstacle = True, flag_display = False):
+# def train(flag_train_obstacle = False, flag_display = True):
+def train(flag_train_obstacle = True, flag_display = False):
     MAX_EPISODES = 5000
     MAX_EP_STEPS = 100
     env = ENV(15, flag_display) 
