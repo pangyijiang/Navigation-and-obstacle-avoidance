@@ -58,7 +58,7 @@ class DDPG:
         # Q-Value Gradients under Current Policy
         actions = self.actor.model.predict(states)
         grads = self.critic.gradients(states, actions)
-        grads_action = np.array(grads).reshape((-1, self.a_dim+1))
+        grads_action = np.array(grads).reshape((-1, self.a_dim))
         # Train actor
         loss_actor = self.actor.train(states, actions, grads_action)
         # Transfer weights to target networks at rate Tau
@@ -71,8 +71,8 @@ class DDPG:
         if np.random.rand() <= self.epsilon and flag_train:
             p = np.random.randint(0 , self.a_dim)
             act_values[p] = 1.0
-        action = np.argmax(act_values)
-        return act_values, action
+        #action = np.argmax(act_values)
+        return act_values
 
     def learn(self):
         # Sample experience from buffer

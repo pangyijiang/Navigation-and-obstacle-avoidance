@@ -2,18 +2,18 @@ import sys
 import numpy as np
 
 from tqdm import tqdm
-from .actor import Actor
-from .critic import Critic
+from actor import Actor
+from critic import Critic
 from memory_buffer import MemoryBuffer
 
 class DDPG:
-    batch_size = 32
-    MEMORY_CAPACITY = 2000
+    batch_size = 64
+    MEMORY_CAPACITY = 4000
     epsilon = 1.0  # exploration rate
-    epsilon_min = 0.1
-    epsilon_decay = 0.9999
+    epsilon_min = 0.01
+    epsilon_decay = 0.99995
 
-    def __init__(self, a_dim, s_dim, gamma = 0.9, lr = 0.001, tau = 0.01):
+    def __init__(self, a_dim, s_dim, gamma = 0.9, lr = 0.0005, tau = 0.01):
         """ Initialization
         """
         # Environment and A2C parameters
@@ -22,8 +22,8 @@ class DDPG:
         self.gamma = gamma
         self.lr = lr
         # Create actor and critic networks
-        self.actor = Actor(self.s_dim, a_dim, lr, tau)
-        self.critic = Critic(self.s_dim, a_dim, lr*2, tau)
+        self.actor = Actor(self.s_dim, a_dim, 0.5 * lr, tau)
+        self.critic = Critic(self.s_dim, a_dim, lr, tau)
         self.buffer = MemoryBuffer(self.MEMORY_CAPACITY)
 
     def policy_action(self, s):
@@ -54,17 +54,16 @@ class DDPG:
         """ Update actor and critic networks from sampled experience
         """
         # Train critic
-        loss_critic = self.critic.train_on_batch(states, actions, critic_target)
+        self.critic.train_on_batch(states, actions, critic_target)
         # Q-Value Gradients under Current Policy
         actions = self.actor.model.predict(states)
         grads = self.critic.gradients(states, actions)
-        grads_action = np.array(grads).reshape((-1, self.a_dim+1))
+        grads_action = np.array(grads).reshape((-1, self.a_dim))
         # Train actor
-        loss_actor = self.actor.train(states, actions, grads_action)
+        self.actor.train(states, actions, grads_action)
         # Transfer weights to target networks at rate Tau
         self.actor.transfer_weights()
         self.critic.transfer_weights()
-        return loss_critic, loss_actor
 
     def step(self, old_state, flag_train):
         act_values = self.policy_action(old_state)
@@ -82,13 +81,7 @@ class DDPG:
         # Compute critic target
         critic_target = self.bellman(rewards, q_values, dones)
         # Train both networks on sampled batch, update target networks
-        loss_critic, loss_actor = self.update_models(states, actions, critic_target)
-        # if self.epsilon > self.epsilon_min:
-        #     self.epsilon *= self.epsilon_decay
-        self._epsilon_decay()
-        return loss_critic, loss_actor
-
-    def _epsilon_decay(self):
+        self.update_models(states, actions, critic_target)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 

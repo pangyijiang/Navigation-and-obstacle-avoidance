@@ -71,14 +71,9 @@ class ENV():
         pg.draw.circle(self.screen, color, pose.astype(int), int(size/3), 0)
 
     def _show_env(self):
-        margin = np.array([0, -5])
-        #pg.draw.line(self.screen, (255, 0, 0), (250,500), (250,0), 1)
-        for i,pos in enumerate(self.obstacles.pos):
-            #pos = self.obstacles.pos[i]
+        for pos in self.obstacles.pos:
             pg.draw.circle(self.screen, self.obstacles.color, pos.astype(int), self.obstacles.size, 0)
-            self.obstacles.pos[i] = self.obstacles.pos[i] + margin
         #for pos in self.gold.pos:
-        self.gold.pos = self.gold.pos + margin
         pg.draw.circle(self.screen, self.gold.color, self.gold.pos.astype(int), self.gold.size, 0)
 
     def _show_robot(self):

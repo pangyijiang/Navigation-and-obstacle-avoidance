@@ -23,7 +23,7 @@ class DDPG:
         self.lr = lr
         # Create actor and critic networks
         self.actor = Actor(self.s_dim, a_dim, lr, tau)
-        self.critic = Critic(self.s_dim, a_dim, lr*2, tau)
+        self.critic = Critic(self.s_dim, a_dim + 1, lr*2, tau)
         self.buffer = MemoryBuffer(self.MEMORY_CAPACITY)
 
     def policy_action(self, s):
@@ -71,8 +71,8 @@ class DDPG:
         if np.random.rand() <= self.epsilon and flag_train:
             p = np.random.randint(0 , self.a_dim)
             act_values[p] = 1.0
-        action = np.argmax(act_values)
-        return act_values, action
+        # action = np.argmax(act_values)
+        return act_values
 
     def learn(self):
         # Sample experience from buffer

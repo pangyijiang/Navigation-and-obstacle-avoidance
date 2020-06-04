@@ -50,10 +50,15 @@ class Actor:
 
         X_1= Flatten()(X_1)
 
-        X_1= Dense(128, activation = "relu")(X_1)
-        X_1= Dense(64, activation='relu')(X_1)
+        X_action= Dense(128, activation = "relu")(X_1)
+        X_action= Dense(64, activation='relu')(X_action)
 
-        Out = Dense(self.act_dim, activation='sigmoid')(X_1)
+        X_imp= Dense(64, activation = "relu")(X_1)
+        X_imp= Dense(32, activation='relu')(X_imp)
+
+        Out_action = Dense(self.act_dim, activation='sigmoid')(X_action)
+        Out_imp = Dense(1, activation='sigmoid')(X_imp)
+        Out = concatenate([Out_action, Out_imp]) 
         #continuous action
         # Out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(Out)
         # Out = Lambda(lambda i: i)(Out)
@@ -88,7 +93,7 @@ class Actor:
     def optimizer(self):
         """ Actor Optimizer
         """
-        action_gdts = K.placeholder(shape=(None, self.act_dim))
+        action_gdts = K.placeholder(shape=(None, self.act_dim + 1))
         temp = K.placeholder(shape=(None, 1))
         # action_gdts = K.placeholder(shape= [self.env_dim])
         params_grad = tf.gradients(self.model.output, self.model.trainable_weights, -action_gdts)

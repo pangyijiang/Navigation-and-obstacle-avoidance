@@ -28,9 +28,7 @@ class SWARM():
         pose_set,vel_set = self._init_pos_vel(self.num_uavs)
         for i in range(self.num_uavs):
             name = "robot_%d" % i
-            pose = np.array([self.map.MAP_SIZE[0]/2, self.map.MAP_SIZE[1]/2])
-            vel = np.zeros(2)
-            self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose,vel))
+            self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose_set[i], vel_set[i]))
             state.append(self.uavs[i].state_cal())
             self.uav_group.add(self.uavs[i])
         return state[0]
@@ -89,7 +87,7 @@ class ROBOT(pg.sprite.Sprite):
         self.robot_pose = robot_pose
         self.robot_pose_prv = robot_pose 
         self.robot_vel = robot_vel
-        self.degree = np.pi/2
+        self.degree = np.arctan2(robot_vel[1], robot_vel[0])
         self.robot_name = robot_name
         self.robot_goal = robot_goal
         #pygame - animation
@@ -117,9 +115,9 @@ class ROBOT(pg.sprite.Sprite):
         reward = 0.0
         done = False
         flag = False
-        #distance with target 
-        r = np.sqrt(np.square(self.robot_goal[0] - self.map.MAP_SIZE[0]))
-        reward += -r*5/((self.map.MAP_SIZE[0])/2)
+        # #distance with target 
+        # r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
+        # reward += -r*5/(np.sum(self.map.MAP_SIZE)/2)
         # #out of map
         # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
         #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
@@ -132,10 +130,10 @@ class ROBOT(pg.sprite.Sprite):
         #collision with obstacle
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
             flag = "loser"
-            reward += -5.0
+            #reward += -5.0
         if self.flag_collision["gold"]:
             flag = "winner"
-            reward += 5.0
+           # reward += 5.0
         #collision with target
         if True in self.flag_collision.values():
             done = True
@@ -155,14 +153,22 @@ class ROBOT(pg.sprite.Sprite):
         return state
 
     def _status_update(self, action):
+        #action = [action_target, action_obstacle]
+        action_target = np.argmax(action[0])  
+        assert action_target in [i for i in range(self.map.n_action)]
+        degree_f_target = np.pi/4*action_target
+        p_force = np.array([np.cos(degree_f_target), np.sin(degree_f_target)])
 
-        if action in [0, 1]:
-            degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action)
-            # degree_f_obstacle = self.degree + np.pi/4*action_obstacle
-            p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
-        else:
-            p_force = np.zeros(2)
-
+        try:
+            action_lel = np.argmax(action[1][-1])
+            if action_lel > 0.5:
+                action_obstacle = np.argmax(action[1][:-1])
+                assert action_obstacle in [i for i in range(2)]
+                # degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action_obstacle)
+                degree_f_obstacle = self.degree + np.pi/4*action_obstacle
+                p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
+        except:
+            pass
         
         self._robot_clk(p_force*self.p_force_gain)
         
@@ -175,7 +181,7 @@ class ROBOT(pg.sprite.Sprite):
             self.robot_vel = self.robot_vel / np.sqrt(np.square(self.robot_vel[0]) + np.square(self.robot_vel[1])) * self.vel_max
 
         #update UAV state
-        # self.degree = np.arctan2(self.robot_vel[1], self.robot_vel[0])  #update UAV heading direction
+        self.degree = np.arctan2(self.robot_vel[1], self.robot_vel[0])  #update UAV heading direction
         self.robot_pose_prv = self.robot_pose
         self.robot_pose = self.robot_pose + self.robot_vel*self.time_clk #update UAV pos
         #update rect for collision dectection
@@ -243,15 +249,15 @@ class ROBOT(pg.sprite.Sprite):
         # im = im.convert("RGB").tobytes("raw", 'RGB')
         # im = pg.image.fromstring(im, (self.radius_obs, self.radius_obs), "RGB")
         # self.map.screen.blit(im, (0,0))
-        # flag = False
-        # if flag:
-        #     import matplotlib.pyplot as plt
-        #     fig = plt.figure()
-        #     subplt0 = fig.add_subplot(121)
-        #     subplt0.imshow(obs_img)
-        #     subplt1 = fig.add_subplot(122)
-        #     subplt1.imshow(screen)
-        #     plt.show()
+        flag = False
+        if flag:
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
+            subplt0 = fig.add_subplot(121)
+            subplt0.imshow(obs_img)
+            subplt1 = fig.add_subplot(122)
+            subplt1.imshow(screen)
+            plt.show()
         #obs_img = obs_img[:, :, np.newaxis]
         obs_img = (obs_img - 127.0)/255.0 #scale
 

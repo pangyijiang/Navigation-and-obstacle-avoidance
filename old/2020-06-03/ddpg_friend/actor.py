@@ -26,22 +26,41 @@ class Actor:
         activation for continuous control. We add parameter noise to encourage
         exploration, and balance it with Layer Normalization.
         """
+        # state_input_0 = Input(shape= self.env_dim[0], name='state_input_0')
+        # X_0 = Dense(256, activation = "relu")(state_input_0)
+        # X_0 = Dropout(rate=0.3)(X_0)
+        # X_0 = Dense(128, activation='relu')(X_0)
+
+
         state_input = Input(shape= self.env_dim, name='state_input')
-        X_1 = Conv2D(filters=8, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(state_input)
+        #inp = Input((self.env_dim))
+        #
+        X_1 = Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(state_input)
+        X_1= Conv2D(filters=4, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= BatchNormalization(momentum=0.15)(X_1)
+        X_1= MaxPool2D(pool_size=(2, 2))(X_1)
+        X_1= Conv2D(filters=4, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
+        X_1= BatchNormalization(momentum=0.15)(X_1)
+        X_1= Dropout(rate=0.3)(X_1)
+
+        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=8, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=8, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=16, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=16, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=16, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= Dropout(rate=0.3)(X_1)
 
-        X_1= Conv2D(filters=32, kernel_size=(3, 3), strides = 2, padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
+        X_1= Conv2D(filters=32, kernel_size=(3, 3), padding='SAME', activation='relu')(X_1)
         X_1= BatchNormalization(momentum=0.15)(X_1)
         X_1= MaxPool2D(pool_size=(2, 2))(X_1)
         X_1= Conv2D(filters=32, kernel_size=(5, 5), padding='SAME', activation='relu')(X_1)
@@ -49,14 +68,21 @@ class Actor:
         X_1= Dropout(rate=0.3)(X_1)
 
         X_1= Flatten()(X_1)
-
-        X_1= Dense(128, activation = "relu")(X_1)
+        X_1= Dense(256, activation = "relu")(X_1)
+        X_1= Dropout(rate=0.3)(X_1)
+        X_1= Dense(128, activation='relu')(X_1)
+        X_1= Dropout(rate=0.3)(X_1)
         X_1= Dense(64, activation='relu')(X_1)
 
-        Out = Dense(self.act_dim, activation='sigmoid')(X_1)
+        # X= Add()([X_1, X_2]) 
+        # X = ReLU()(X)
+        #X = Dense(128, activation='relu')(X_1)
+        # x = Dense(64, activation='relu')(X)
+        #discrete action
+        Out = Dense(self.act_dim, activation='sigmoid', kernel_initializer=RandomUniform())(X_1)
         #continuous action
-        # Out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(Out)
-        # Out = Lambda(lambda i: i)(Out)
+        #out = Dense(self.act_dim, activation='tanh', kernel_initializer=RandomUniform())(X)
+        #out = Lambda(lambda i: i * self.act_range)(out)
         #
         return Model(state_input, Out)
 
@@ -64,10 +90,33 @@ class Actor:
         """ Action prediction
         """
         return self.model.predict(np.expand_dims(state, axis=0))
+        # return self.model.predict(state)
+        # return self.model.predict([state[0][np.newaxis,:], state[1][np.newaxis, :, :, :]])
+
+    # def batch_predict(self, state):
+    #     """ Action prediction
+    #     """
+    #     # batch_state_1, batch_state_2= [],[]
+    #     # for i in state:
+    #     #     batch_state_1.append(i[0])
+    #     #     batch_state_2.append(i[1])
+    #     # batch_state_1 = np.array(batch_state_1)
+    #     # batch_state_2 = np.array(batch_state_2)
+    #     # return self.model.predict(np.expand_dims(state, axis=0))
+    #     # return self.model.predict([batch_state_1, batch_state_2])
+    #     return self.model.predict(np.expand_dims(state, axis=0))
 
     def target_predict(self, inp):
         """ Action prediction (target network)
         """
+        # batch_state_1, batch_state_2= [],[]
+        # for i in inp:
+        #     batch_state_1.append(i[0])
+        #     batch_state_2.append(i[1])
+        # batch_state_1 = np.array(batch_state_1)
+        # batch_state_2 = np.array(batch_state_2)
+
+        # return self.target_model.predict([batch_state_1, batch_state_2])
         return self.target_model.predict(inp)
 
 
@@ -82,8 +131,14 @@ class Actor:
     def train(self, states, actions, grads):
         """ Actor Training
         """
-        loss = self.adam_optimizer([states, grads])
-        return np.sum(loss) #loss of each sample data
+        # batch_state_1, batch_state_2= [],[]
+        # for i in states:
+        #     batch_state_1.append(i[0])
+        #     batch_state_2.append(i[1])
+        # batch_state_1 = np.array(batch_state_1)
+        # batch_state_2 = np.array(batch_state_2)
+
+        self.adam_optimizer([states, grads])
 
     def optimizer(self):
         """ Actor Optimizer
@@ -93,8 +148,7 @@ class Actor:
         # action_gdts = K.placeholder(shape= [self.env_dim])
         params_grad = tf.gradients(self.model.output, self.model.trainable_weights, -action_gdts)
         grads = zip(params_grad, self.model.trainable_weights)
-        loss = K.categorical_crossentropy(action_gdts, self.model.output)
-        return K.function(inputs=[self.model.input, action_gdts], outputs=[loss],updates=[tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
+        return K.function(inputs=[self.model.input, action_gdts], outputs=[ K.constant(1)],updates=[tf.train.AdamOptimizer(self.lr).apply_gradients(grads)])
         
 
     def save(self, filename):
