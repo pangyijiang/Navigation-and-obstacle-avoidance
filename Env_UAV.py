@@ -14,7 +14,7 @@ class ENV():
     color_bg = [255,255,255]
     MAP_SIZE = [500, 500]
     n_action = 8
-    n_state_target = 8  #neural network for chasing target
+    n_state = 8 + 9  #neural network for chasing target
     
     def __init__(self, obs_num = 0, flag_display = True):
         self.obs_num = obs_num

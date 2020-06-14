@@ -6,10 +6,10 @@ from ddpg_keras import DDPG
 def train(flag_train = False, flag_display = True):
 # def train(flag_train = True, flag_display = False):
     MAX_EPISODES = 4000
-    MAX_EP_STEPS = 400
+    MAX_EP_STEPS = 200
     env = ENV(15, flag_display)
 
-    agent = DDPG(env.n_action, 8 + 9)
+    agent = DDPG(env.n_action, env.n_state)
     # if(not flag_train):
     agent.load_weights()
 
