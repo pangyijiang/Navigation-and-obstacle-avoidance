@@ -1,6 +1,5 @@
 # swarm-control-inspired-by-human
-<img src="images/agent.gif" width="400" >
-<img src="images/agents.gif" width="400" >
+<img src="images/agent.gif" width="400" > <img src="images/agents.gif" width="400" >
 
 # OverView
 Navigation and obstacle avoidance for an agent in unknown environments.
