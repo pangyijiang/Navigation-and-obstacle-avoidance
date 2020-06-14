@@ -8,7 +8,6 @@ import time
 
 class SWARM():
     uavs = []
-    uav_group = pg.sprite.Group()
     r_comm = 200 #communication radius
     flag_show_comm = False   #show comm radius
     flag_show_data = False   #show data
@@ -23,35 +22,29 @@ class SWARM():
         # Initialise swarm
         self.uavs = []
         state = []
-        self.uav_group = pg.sprite.Group()
         self.trans = Transmitter(self.r_comm)
         pose_set,vel_set = self._init_pos_vel(self.num_uavs)
         for i in range(self.num_uavs):
             name = "robot_%d" % i
-            pose = np.array([self.map.MAP_SIZE[0]/2, self.robot_size*4])
-            vel = np.zeros(2)
-            self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose,vel))
+            self.uavs.append(ROBOT(self.map, self.trans, name, self.robot_size, self.map.gold.pos, pose_set[i], vel_set[i]))
             state.append(self.uavs[i].state_cal())
-            self.uav_group.add(self.uavs[i])
         return state[0]
 
     def _init_pos_vel(self, num_uavs):
-        circle_point = np.arange(0 , 2*math.pi , 2*math.pi/num_uavs)
-        r = 30.0
-        centre_x = self.map.MAP_SIZE[0]/2
-        centre_y = self.map.MAP_SIZE[1]/2
         while True:
             pose_set = [np.array([np.random.randint(0, self.map.MAP_SIZE[0]), np.random.randint(0, self.map.MAP_SIZE[1])]) for i in range(num_uavs)]
-            r = []
+            colllision_dectector = []
             for robot_pose in pose_set:
-                for obstacle_pos in self.map.obstacles.pos:
-                    r.append(np.sqrt(np.sum(np.square(robot_pose - obstacle_pos))))
-                r.append(np.sqrt(np.sum(np.square(robot_pose - self.map.gold.pos))))
-            if min(r) > (self.robot_size + self.map.obstacles.size) and min(r) > (self.robot_size + self.map.gold.size):
+                for obs_pos, obs_size in zip(self.map.obstacles.pos, self.map.obstacles.size):
+                    r = np.sqrt(np.sum(np.square(robot_pose - obs_pos)))
+                    if r < self.robot_size + obs_size:
+                        colllision_dectector.append(1)
+                r = np.sqrt(np.sum(np.square(robot_pose - self.map.gold.pos)))
+                if r < self.robot_size + self.map.gold.size:
+                    colllision_dectector.append(1)
+            if 1 not in colllision_dectector:
                 break
-        #vel_set = [np.array([math.sin(circle_point[i]), math.cos(circle_point[i])])*np.random.uniform(8.0, 20.0) for i in range(num_uavs)]
-        #vel_set = [np.array([np.random.uniform(-50.0, 50.0), np.random.uniform(-50.0, 50.0)]) for i in range(num_uavs)]
-        vel_set = [np.array([np.random.randint(0, self.map.MAP_SIZE[0]), np.random.randint(0, self.map.MAP_SIZE[1])]) for i in range(num_uavs)]
+        vel_set = [np.array([np.random.randint(0, 70), np.random.randint(0, 70)]) for i in range(num_uavs)]
         return pose_set,vel_set
 
     def swarm_step(self, actions):
@@ -60,27 +53,33 @@ class SWARM():
         #step 1
         for uav,action in zip(self.uavs, actions):
             uav.step_1(action)
-        #update graph
-        self.map.update_screen()
+        #update necessary graph
+        self.map.update_screen_1()
         #step 2
         for uav in self.uavs:
-            state, reward, done, flag = uav.step_2()
-        return state, reward, done, flag
-        #show min windows  - not suitable for multi-robots
+            state, reward, done, flag, robot_pose, radar_end = uav.step_2()
+        
+        #update necessary graph
+        self.map.update_screen_2(robot_pose, radar_end)
 
-class ROBOT(pg.sprite.Sprite):
+        return state, reward, done, flag
+
+class ROBOT():
     info_pkg_s = {}
     info_pkg_r = {}
     comm_delay = 0.5    #delay time of communication
-    robot_color  = (65,105,225)  #DeepSkyBlue
+    robot_color  = (0, 0, 255)  #blue
     flag_collision = {"uav":True, "obstacle":False, "gold":False}
-    radius_obs = 128
+    radius_obs = 64
     #physical state
-    time_clk = 0.1
+    time_clk = 0.05
     damping = 0.25
     mass = 1.0
-    vel_max = 100    #linear velocity
+    vel_max = 50    #linear velocity
     p_force_gain = 200
+    radar_degree  = [ i*np.pi/18 for i in [-6, -4.5, -3, -1.5, 0, 1.5, 3, 4.5, 6]]
+    radar_dis = np.zeros(9)
+    
 
     def __init__(self, map, transmitter, robot_name, robot_size, robot_goal, robot_pose = np.zeros(2), robot_vel = np.zeros(2)):
         #calculation
@@ -89,16 +88,15 @@ class ROBOT(pg.sprite.Sprite):
         self.robot_pose = robot_pose
         self.robot_pose_prv = robot_pose 
         self.robot_vel = robot_vel
-        self.degree = np.pi/2
         self.robot_name = robot_name
         self.robot_goal = robot_goal
-        #pygame - animation
-        pg.sprite.Sprite.__init__(self) # for collision dectection
-        #for collision dectection
-        self.robot_size = robot_size 
-        self.rect = pg.Rect(0, 0, self.robot_size*2, self.robot_size*2)
-        self.rect.center = self.robot_pose
-        self.r_margin = (self.robot_size + self.map.obstacles.size + self.robot_size*2) #min distance to  obstacle
+        self.robot_size = robot_size
+        self.robot_degree = np.arctan2(robot_vel[1], robot_vel[0])
+        self.robot_obs_rect = [ np.zeros(2) for i in range(4)]
+        # self.radar_dis_threshold  = np.array([ abs(robot_size*3/2/np.sin(d)/self.radius_obs) for d in self.radar_degree])
+        self.radar_dis_threshold  = np.array([ abs(robot_size*3/2/np.sin(d)) for d in self.radar_degree])
+        self.radar_dis_threshold[int(len(self.radar_dis_threshold)/2)] = self.radius_obs
+        radar_end = np.array([self.robot_pose for i in range(9)])
 
     def step_1(self, action):
         #exchange info with neighbors
@@ -111,66 +109,57 @@ class ROBOT(pg.sprite.Sprite):
         #cal "state, reward, done"
         state = self.state_cal()
         reward, done, flag = self.reward_cal()
-        return state, reward, done, flag
+        return state, reward, done, flag, self.robot_pose, self.radar_end
 
     def reward_cal(self):
         reward = 0.0
+        reward_t = 0.0
+        reward_obs = 0.0
         done = False
-        flag = False
+        flag = "TryOut"
         #distance with target 
-        r = np.sqrt(np.square(self.robot_goal[0] - self.map.MAP_SIZE[0]))
-        reward += -r*2/((self.map.MAP_SIZE[0])/2)
-        # #out of map
-        # if self.robot_pose[0] > self.map.MAP_SIZE[0] or self.robot_pose[0] < 0 or self.robot_pose[1] > self.map.MAP_SIZE[1] or self.robot_pose[1] < 0:
-        #     r = np.sqrt(np.sum(np.square(self.robot_pose - np.array(self.map.MAP_SIZE)/2)))
-        #     reward += -r/(np.sum(self.map.MAP_SIZE)/2)
-        #
-        for obstacle_pos in self.map.obstacles.pos:
-            r_x = np.sqrt(np.square(self.robot_pose[0] - obstacle_pos[0]))
-            r_y = np.sqrt(np.square(self.robot_pose[1] - obstacle_pos[1]))
-            r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
-            if obstacle_pos[1] - self.robot_pose[1] > -(self.robot_size + self.map.obstacles.size) \
-                and r < self.r_margin:
-                reward +=  -2*(self.r_margin - r)/(self.robot_size*2) - 2
-            if obstacle_pos[1] - self.robot_pose[1] > self.r_margin \
-                and r_x <= (self.robot_size + self.map.obstacles.size) \
-                and r_y <= self.r_margin+self.robot_size*2:
-                reward +=  -2*(self.robot_size + self.map.obstacles.size - r_x)/(self.robot_size + self.map.obstacles.size) - 2
-        #collision with obstacle
+        # r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
+        # reward += -r/(np.sum(self.map.MAP_SIZE)/2*1.414)*5.0
+        r = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose)))
+        r_p = np.sqrt(np.sum(np.square(self.robot_goal - self.robot_pose_prv)))
+        reward += -(r - r_p)/5.0
+        for th, dis in zip(self.radar_dis_threshold, self.radar_dis):
+            if dis < th:
+                 reward += -(th - dis)/(th - self.robot_size)*1.0
+                 if dis < self.robot_size*2:
+                      reward += - 2.0
+        # reward = reward_obs if reward_obs < 0.0 else reward_t
         if self.flag_collision["uav"] | self.flag_collision["obstacle"]:
+            reward += -2.0
             flag = "loser"
-            # reward += -4.0
         if self.flag_collision["gold"]:
+            reward += 2.0
             flag = "winner"
-            #reward += 5.0
-        #collision with target
         if True in self.flag_collision.values():
             done = True
         return reward, done, flag
+
     def state_cal(self):
-        nei_region = self._obs()
-        # #position
+        map_mid = np.array(self.map.MAP_SIZE)/2
+        # nei_region = self._obs()
+        radar = self._radar()/self.radius_obs
+        # obs_pos = (np.array(self.map.obstacles.pos).flatten() - 250)/250
+        # obs_size = (np.array(self.map.obstacles.size).flatten() - 15)/15
+        #position
         dir = (self.robot_goal - self.robot_pose)
         dir = dir/np.sqrt(np.sum(np.square(dir)))  #scale
-        map_mid = np.array(self.map.MAP_SIZE)/2
         pos_robot = (self.robot_pose - map_mid)/map_mid   #scale
         pos_goal = (self.robot_goal - map_mid)/map_mid    #scale
         vel = self.robot_vel/self.vel_max   ##scale
-        pos_related = np.hstack((dir, pos_goal, pos_robot, vel))
-        state = [pos_related, nei_region]
-        # state = nei_region
+        # pos_related = np.hstack((dir, pos_goal, pos_robot, vel))
+        # state = [pos_related, nei_region]
+        state = np.hstack((dir, pos_goal, pos_robot, vel, radar))
         return state
 
     def _status_update(self, action):
-
-        if action in [0, 1]:
-            degree_f_obstacle = self.degree + np.pi/2*(1 - 2*action)
-            # degree_f_obstacle = self.degree + np.pi/4*action_obstacle
-            p_force = np.array([np.cos(degree_f_obstacle), np.sin(degree_f_obstacle)])
-        else:
-            p_force = np.zeros(2)
-
-        
+        assert action in [i for i in range(self.map.n_action)]
+        degree_f = np.pi/4*action
+        p_force = np.array([np.cos(degree_f), np.sin(degree_f)])   
         self._robot_clk(p_force*self.p_force_gain)
         
     def _robot_clk(self, p_force):
@@ -181,60 +170,55 @@ class ROBOT(pg.sprite.Sprite):
         if speed > self.vel_max:
             self.robot_vel = self.robot_vel / np.sqrt(np.square(self.robot_vel[0]) + np.square(self.robot_vel[1])) * self.vel_max
 
-        #update UAV state
-        # self.degree = np.arctan2(self.robot_vel[1], self.robot_vel[0])  #update UAV heading direction
+        self.robot_degree = np.arctan2(self.robot_vel[1], self.robot_vel[0])  #update UAV heading direction
         self.robot_pose_prv = self.robot_pose
-        self.robot_pose = self.robot_pose + self.robot_vel*self.time_clk #update UAV pos
-        #update rect for collision dectection
-        self.rect.center = self.robot_pose
+        self.robot_pose = self.robot_pose + self.robot_vel*self.time_clk
 
+    def _radar(self):
+        
+        data = pg.image.tostring(self.map.screen, 'RGB')
+        screen = Image.frombytes('RGB', self.map.MAP_SIZE, data)
+        screen = screen.convert('L')
+        screen = np.array(screen)
+        # screen = screen[:, :, np.newaxis]
+        # screen = (screen - 127.0)/255.0 #scale
+        
+        self.radar_dis = np.zeros(9)
+        self.radar_end = np.array([self.robot_pose for i in range(9)])    #np.zeros((9,2))
+        for j, degree in enumerate(self.radar_degree):
+            for i in range(self.radius_obs):
+                x = int(self.robot_pose[0] + np.cos(self.robot_degree + degree)*i)
+                y = int(self.robot_pose[1] + np.sin(self.robot_degree + degree)*i)
+                if y in range(0,screen.shape[0]) and x in range(0,screen.shape[1]):
+                    if screen[y][x] != np.average(self.map.obstacles.color):
+                        self.radar_dis[j] += 1
+                        self.radar_end[j][0] = x
+                        self.radar_end[j][1] = y
+                    else:
+                        break
+                else:
+                    break
+        # return self.radar_dis.flatten()/self.radius_obs
+        return self.radar_dis.flatten()
+            
     def _obs(self):
         data = pg.image.tostring(self.map.screen, 'RGB')
         screen = Image.frombytes('RGB', self.map.MAP_SIZE, data)
-        # screen = screen.convert('L')
+        screen = screen.convert('L')
         screen = np.array(screen)
-        r_half = int(self.radius_obs/2)
-        # add direction point to obs_img
-        # degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
-        # point_x_c2r = int(self.robot_pose[0] + np.cos(degree_target)*self.radius_obs*0.9)
-        # point_y_c2r = int(self.robot_pose[1] + np.sin(degree_target)*self.radius_obs*0.9)
-        # try:
-        #     screen[point_y_c2r][point_x_c2r] = 10.0
-        #     screen[point_y_c2r +1][point_x_c2r] = 10.0
-        #     screen[point_y_c2r -1][point_x_c2r] = 10.0
-        #     screen[point_y_c2r][point_x_c2r+1] = 10.0
-        #     screen[point_y_c2r][point_x_c2r-1] = 10.0
-        #     screen[point_y_c2r+1][point_x_c2r+1] = 10.0
-        #     screen[point_y_c2r+1][point_x_c2r-1] = 10.0
-        #     screen[point_y_c2r-1][point_x_c2r+1] = 10.0
-        #     screen[point_y_c2r-1][point_x_c2r-1] = 10.0
-        # except :
-        #     pass
+        screen = screen[:, :, np.newaxis]
+        screen = (screen - 127.0)/255.0 #scale
         
-        # degree_target = np.arctan2(self.robot_goal[1] - self.robot_pose[1], self.robot_goal[0] - self.robot_pose[0])
-        # degree_c2r = self.degree + degree_target*2
-        # point_x_c2r = int(c_x + np.cos(degree_c2r)*r_half)
-        # point_y_c2r = int(c_y + np.sin(degree_c2r)*r_half)
-
-        # screen[point_y_c2r][point_x_c2r] = 0.0
-        # screen[point_y_c2r +1][point_x_c2r] = 0.0
-        # screen[point_y_c2r -1][point_x_c2r] = 0.0
-        # screen[point_y_c2r][point_x_c2r+1] = 0.0
-        # screen[point_y_c2r][point_x_c2r-1] = 0.0
-        # screen[point_y_c2r+1][point_x_c2r+1] = 0.0
-        # screen[point_y_c2r+1][point_x_c2r-1] = 0.0
-        # screen[point_y_c2r-1][point_x_c2r+1] = 0.0
-        # screen[point_y_c2r-1][point_x_c2r-1] = 0.0
-
-        obs_img = np.zeros((self.radius_obs, self.radius_obs, 3), dtype="uint8")
+        r_half = int(self.radius_obs/2)
+        obs_img = np.zeros([self.radius_obs, self.radius_obs, 1])
         for i in range(self.radius_obs):
-            c_x = self.robot_pose[0] + np.cos(self.degree)*i
-            c_y = self.robot_pose[1] + np.sin(self.degree)*i
+            c_x = self.robot_pose[0] + np.cos(self.robot_degree)*i
+            c_y = self.robot_pose[1] + np.sin(self.robot_degree)*i
             for j in range(r_half):
-                point_1_x = int( c_x + np.cos(np.pi/2 + self.degree)*j )
-                point_1_y = int( c_y + np.sin(np.pi/2 + self.degree)*j )
-                point_2_x = int( c_x + np.cos(self.degree - np.pi/2)*j )
-                point_2_y = int( c_y + np.sin(self.degree - np.pi/2)*j )
+                point_1_x = int( c_x + np.cos(np.pi/2 + self.robot_degree)*j )
+                point_1_y = int( c_y + np.sin(np.pi/2 + self.robot_degree)*j )
+                point_2_x = int( c_x + np.cos(self.robot_degree - np.pi/2)*j )
+                point_2_y = int( c_y + np.sin(self.robot_degree - np.pi/2)*j )
 
                 if point_2_y in range(0,screen.shape[0]) and point_2_x in range(0,screen.shape[1]):
                     obs_img[r_half - j][i][:] = screen[point_2_y][point_2_x][:]
@@ -244,6 +228,13 @@ class ROBOT(pg.sprite.Sprite):
                     obs_img[r_half + j][i][:] = screen[point_1_y][point_1_x][:]
                 else:
                     obs_img[r_half + j][i][:] = 0.0
+
+            if i == 0 and j == r_half-1:
+                self.robot_obs_rect[0] = np.array([point_1_x, point_1_y])
+                self.robot_obs_rect[1] = np.array([point_2_x, point_2_y])
+            if i == self.radius_obs-1 and j == r_half-1:
+                self.robot_obs_rect[2] = np.array([point_2_x, point_2_y])
+                self.robot_obs_rect[3] = np.array([point_1_x, point_1_y])
                 
         #test obs
         # im=Image.fromarray(obs_img)
@@ -259,10 +250,9 @@ class ROBOT(pg.sprite.Sprite):
         #     subplt1 = fig.add_subplot(122)
         #     subplt1.imshow(screen)
         #     plt.show()
-        #obs_img = obs_img[:, :, np.newaxis]
-        obs_img = (obs_img - 127.0)/255.0 #scale
-
+        obs_img = obs_img.flatten()
         return obs_img
+
 
     def _collision_detection(self):
         self.flag_collision = {"uav":False, "obstacle":False, "gold":False}
@@ -272,9 +262,9 @@ class ROBOT(pg.sprite.Sprite):
             if r <= self.robot_size*2:
                 self.flag_collision["uav"] = True
                 break
-        for obstacle_pos in self.map.obstacles.pos:
-            r = np.sqrt(np.sum(np.square(self.robot_pose - obstacle_pos)))
-            if r <= (self.robot_size + self.map.obstacles.size):
+        for obs_pos, obs_size in zip(self.map.obstacles.pos, self.map.obstacles.size):
+            r = np.sqrt(np.sum(np.square(self.robot_pose - obs_pos)))
+            if r <= (self.robot_size + obs_size):
                 self.flag_collision["obstacle"] = True
                 break
         #for gold_pos in self.map.gold.pos:

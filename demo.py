@@ -1,17 +1,18 @@
 
 from Env_UAV import ENV
 import numpy as np
-from ddpg_obstacle.ddpg_keras import DDPG as DDPG_obstacle
+from ddpg_keras import DDPG
 
+def train(flag_train = False, flag_display = True):
+# def train(flag_train = True, flag_display = False):
+    MAX_EPISODES = 4000
+    MAX_EP_STEPS = 400
+    env = ENV(15, flag_display)
 
-# def train(flag_train_obstacle = False, flag_display = True):
-def train(flag_train_obstacle = True, flag_display = False):
-    MAX_EPISODES = 5000
-    MAX_EP_STEPS = 100
-    env = ENV(15, flag_display) 
-    model_obstacle = DDPG_obstacle(3, (128,128,3))
-    model_obstacle.load_weights("model_obstacle")
-    
+    agent = DDPG(env.n_action, 8 + 9)
+    # if(not flag_train):
+    agent.load_weights()
+
     for episode in range(MAX_EPISODES):
         #reset env
         while True:
@@ -21,10 +22,10 @@ def train(flag_train_obstacle = True, flag_display = False):
             if True not in env.swarm.uavs[0].flag_collision.values():
                 break
         ep_reward = 0.0
+        flag = "None"
         step  = 0
-        done = False
         for j in range(MAX_EP_STEPS):
-            act_values_obstacle, action = model_obstacle.step(state[1], flag_train_obstacle)
+            act_values, action = agent.step(state, flag_train)
             n_state, reward, done, flag = env.swarm.swarm_step([action])
 
             if flag_display:
@@ -32,25 +33,24 @@ def train(flag_train_obstacle = True, flag_display = False):
                 flag_running = env.pg_event()
                 if not flag_running:
                     return
-
-            model_obstacle.remember(state[1], act_values_obstacle, reward, done, n_state[1])
-            if flag_train_obstacle:
-                if model_obstacle.buffer.size() >= model_obstacle.MEMORY_CAPACITY:
-                    model_obstacle.learn()
+            if(flag_train):
+                agent.remember(state, act_values, reward, done, n_state)
+                if agent.buffer.size() >= agent.MEMORY_CAPACITY:
+                    agent.learn()
             state = n_state
             ep_reward += reward
             step = j
-            if done:
+            if done: 
                 break
 
         if(episode%100 ==0 and episode!=0):
-            model_obstacle.save_weights("model_obstacle")
+            agent.save_weights()
+        print('Episode = %d, flag = %s, ep_Reward = %.2f, step = %d, explore_rate = %.2f'% (episode, flag, ep_reward, step, agent.epsilon))
 
-        explore_rate = ("explore_rate_obs = %.2f" % (model_obstacle.epsilon))
-        print('Episode = %d, done = %s, ep_Reward = %.2f, step = %d, %s'% (episode, flag, ep_reward, step, explore_rate))
-    
-    model_obstacle.save_weights("model_obstacle")
-    print("Training is completed...")
+    if(flag_train):
+        agent.save_weights()
+        print("Training is completed...")
+
 
 if __name__ == "__main__":
     train()
